@@ -8,7 +8,7 @@ private func emoji(unified: String) -> String {
 }
 
 /// A representation of a single emoji character and its associated metadata.
-public struct EmojiCharacter: Equatable, Decodable {
+public struct Emoji: Equatable, Decodable {
   public struct SkinVariation: Equatable, Decodable {
     public let unified: String
 

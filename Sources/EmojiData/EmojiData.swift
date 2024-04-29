@@ -1,21 +1,23 @@
-import Data
+import EmojiDataSource
 import Foundation
 
 private enum Computed {
   static var isComputed: Bool = false
-  static var emojisByUnified: [String: EmojiCharacter] = [:]
-  static var emojisByShortName: [String: EmojiCharacter] = [:]
-  static var emojisByCharacter: [String: EmojiCharacter] = [:]
+  static var emojisByUnified: [String: Emoji] = [:]
+  static var emojisByShortName: [String: Emoji] = [:]
+  static var emojisByCharacter: [String: Emoji] = [:]
   static var regex: NSRegularExpression = .init()
 }
 
-public enum Emoji {
+public typealias Emoji = EmojiDataSource.Emoji
+
+public enum EmojiData {
   private static func prepareIfNecessary() {
     guard !Computed.isComputed else { return }
-    var emojisByUnified: [String: EmojiCharacter] = [:]
-    var emojisByShortName: [String: EmojiCharacter] = [:]
-    var emojisByCharacter: [String: EmojiCharacter] = [:]
-    for emoji in Data.emojis {
+    var emojisByUnified: [String: Emoji] = [:]
+    var emojisByShortName: [String: Emoji] = [:]
+    var emojisByCharacter: [String: Emoji] = [:]
+    for emoji in EmojiDataSource.emojis {
       emojisByUnified[emoji.unified] = emoji
       emojisByShortName[emoji.shortName] = emoji
       emojisByCharacter[emoji.character] = emoji
@@ -49,35 +51,35 @@ public enum Emoji {
     Computed.isComputed = true
   }
 
-  /// Find an ``EmojiCharacter`` by unified codepoint ID.
+  /// Find an ``Emoji`` by unified codepoint ID.
   ///
   /// - Parameters:
   ///   - unified: The unified codepoint ID for an emoji.
   ///
-  /// - Returns The ``EmojiCharacter`` or `nil` when there is no Emoji for the given codepoint ID
-  public static func from(unified: String) -> EmojiCharacter? {
+  /// - Returns The ``Emoji`` or `nil` when there is no Emoji for the given codepoint ID
+  public static func emoji(fromUnified unified: String) -> Emoji? {
     self.prepareIfNecessary()
     return Computed.emojisByUnified[unified]
   }
 
-  /// Find an ``EmojiCharacter`` by any of it's known short names
+  /// Find an ``Emoji`` by any of it's known short names
   ///
   /// - Parameters:
   ///   - shortName: The shortname to look for
   ///
-  /// Returns The ``EmojiCharacter`` or `nil` when there is no Emoji for the given short name
-  public static func from(shortName: String) -> EmojiCharacter? {
+  /// Returns The ``Emoji`` or `nil` when there is no Emoji for the given short name
+  public static func emoji(fromShortName shortName: String) -> Emoji? {
     self.prepareIfNecessary()
     return Computed.emojisByShortName[shortName]
   }
 
-  /// Find an ``EmojiCharacter`` by the unicode character itself
+  /// Find an ``Emoji`` by the unicode character itself
   ///
   /// - Parameters:
   ///   - character: A unicode character string like: 😀
   ///
-  /// Returns The ``EmojiCharacter`` or `nil` when there is no Emoji for the given character
-  public static func from(character: String) -> EmojiCharacter? {
+  /// Returns The ``Emoji`` or `nil` when there is no Emoji for the given character
+  public static func emoji(fromCharacter character: String) -> Emoji? {
     self.prepareIfNecessary()
     return Computed.emojisByCharacter[character]
   }
@@ -117,7 +119,7 @@ public enum Emoji {
     guard let emojiAlias = emojiElements.first else {
       return nil
     }
-    guard let emoji = from(shortName: emojiAlias) else {
+    guard let emoji = emoji(fromShortName: emojiAlias) else {
       return nil
     }
 

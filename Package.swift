@@ -13,21 +13,25 @@ let package = Package(
   ],
   products: [
     .library(
-      name: "Emoji",
-      targets: ["Emoji"]
+      name: "EmojiData",
+      targets: ["EmojiData"]
+    ),
+    .library(
+      name: "EmojiDataSource",
+      targets: ["EmojiDataSource"]
     ),
   ],
   targets: [
     .target(
-      name: "Emoji",
-      dependencies: [.targetItem(name: "Data", condition: nil)]
+      name: "EmojiData",
+      dependencies: [.targetItem(name: "EmojiDataSource", condition: nil)]
     ),
     .target(
-      name: "Data"
+      name: "EmojiDataSource"
     ),
     .testTarget(
       name: "EmojiTests",
-      dependencies: ["Emoji"]
+      dependencies: ["EmojiData"]
     ),
   ]
 )

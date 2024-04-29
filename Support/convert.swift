@@ -9,7 +9,7 @@ private func emoji(unified: String) -> String {
   return String(String.UnicodeScalarView(unicodeScalars))
 }
 
-public struct EmojiCharacter: Equatable, Decodable {
+public struct Emoji: Equatable, Decodable {
   public struct SkinVariation: Equatable, Decodable {
     public let unified: String
 
@@ -62,11 +62,11 @@ public struct EmojiCharacter: Equatable, Decodable {
   }
 }
 
-func string(for variation: EmojiCharacter.SkinVariation) -> String {
-  "EmojiCharacter.SkinVariation(unified: \"\(variation.unified)\")"
+func string(for variation: Emoji.SkinVariation) -> String {
+  "Emoji.SkinVariation(unified: \"\(variation.unified)\")"
 }
 
-func string(for emoji: EmojiCharacter) -> String {
+func string(for emoji: Emoji) -> String {
   let shortNames = emoji.shortNames.map { "\"\($0)\"" }.joined(separator: ",")
 
   let skinVariations: String
@@ -81,7 +81,7 @@ func string(for emoji: EmojiCharacter) -> String {
     skinVariations = "nil"
   }
 
-  return "EmojiCharacter(name: \"\(emoji.name)\", unified: \"\(emoji.unified)\", shortName: \"\(emoji.shortName)\", shortNames: [\(shortNames)], skinVariations: \(skinVariations))"
+  return "Emoji(name: \"\(emoji.name)\", unified: \"\(emoji.unified)\", shortName: \"\(emoji.shortName)\", shortNames: [\(shortNames)], skinVariations: \(skinVariations))"
 }
 
 private var decoder: JSONDecoder = {
@@ -93,21 +93,19 @@ private var decoder: JSONDecoder = {
 let url = URL(fileURLWithPath: "./emoji.json")
 let data = try! Data(contentsOf: url)
 
-let emojis = try! decoder.decode([EmojiCharacter].self, from: data)
+let emojis = try! decoder.decode([Emoji].self, from: data)
 
 var output = """
-enum Data {
-  static let emojis = [
+public let emojis = [
 
 """
 
 for emoji in emojis {
-  output += "    \(string(for: emoji)),\n"
+  output += "  \(string(for: emoji)),\n"
 }
 
 output += """
-  ]
-}
+]
 """
-let writeURL = URL(fileURLWithPath: "./../Sources/Data/Data.swift")
+let writeURL = URL(fileURLWithPath: "./../Sources/EmojiDataSource/Data.swift")
 try! output.write(to: writeURL, atomically: true, encoding: .utf8)
