@@ -1,92 +1,21 @@
+import Data
 import Foundation
 
-private func emoji(unified: String) -> String {
-  let components = unified.components(separatedBy: "-")
-  let values = components.compactMap{ UInt32($0, radix: 16) }
-  let unicodeScalars = values.compactMap(Unicode.Scalar.init)
-  return String(String.UnicodeScalarView(unicodeScalars))
+private enum Computed {
+  static var isComputed: Bool = false
+  static var emojisByUnified: [String: EmojiCharacter] = [:]
+  static var emojisByShortName: [String: EmojiCharacter] = [:]
+  static var emojisByCharacter: [String: EmojiCharacter] = [:]
+  static var regex: NSRegularExpression = .init()
 }
 
-/// A representation of a single emoji character and its associated metadata.
-public struct EmojiCharacter: Equatable, Decodable {
-  public struct SkinVariation: Equatable, Decodable {
-    public let unified: String
-
-    /// The emoji character variation as a `String`
-    /// For example `1F476-1F3FD` is rendered as 👶🏽
-    public var character: String {
-      emoji(unified: unified)
-    }
-  }
-
-  /// The offical Unicode name, in SHOUTY UPPERCASE.
-  public let name: String
-
-  /// The Unicode codepoint, as 4-5 hex digits. Where an emoji needs 2 or more codepoints, they are specified like 1F1EA-1F1F8.
-  /// For emoji that need to specifiy a variation selector (-FE0F), that is included here.
-  public let unified: String
-
-  /// The commonly-agreed upon short name for the image, as supported in campfire, github etc via the :colon-syntax:
-  public let shortName: String
-
-  /// An array of all the known short names.
-  public let shortNames: [String]
-
-  /// For emoji with multiple skin tone variations, a list of alternative glyphs, keyed by the skin tone.
-  /// For emoji that support multiple skin tones within a single emoji, each skin tone is separated by a dash character.
-  public let skinVariations: [String: SkinVariation]?
-
-  public init(
-    name: String,
-    unified: String,
-    shortName: String,
-    shortNames: [String],
-    skinVariations: [String: SkinVariation]?
-  ) {
-    self.name = name
-    self.unified = unified
-    self.shortName = shortName
-    self.shortNames = shortNames
-    self.skinVariations = skinVariations
-  }
-
-  /// The emoji character as a `String`
-  /// /// For example `1F476` is rendered as 👶
-  public var character: String {
-    emoji(unified: unified)
-  }
-}
-
-public struct Emoji {
-  private static var decoder: JSONDecoder = {
-    let decoder = JSONDecoder()
-    decoder.keyDecodingStrategy = .convertFromSnakeCase
-    return decoder
-  }()
-
-  struct LoadError: Error {}
-
-  private let emojis: [EmojiCharacter]
-  private let emojisByUnified: [String: EmojiCharacter]
-  private let emojisByShortName: [String: EmojiCharacter]
-  private let emojisByCharacter: [String: EmojiCharacter]
-  private let regex: NSRegularExpression
-
-  public init() async throws {
-    let task = Task {
-      guard let url = Bundle.module.url(forResource: "emoji", withExtension: "json") else {
-        throw LoadError()
-      }
-      let data = try Data(contentsOf: url)
-
-      return try Self.decoder.decode([EmojiCharacter].self, from: data)
-    }
-    self.emojis = try await task.value
-
+public enum Emoji {
+  private static func prepareIfNecessary() {
+    guard !Computed.isComputed else { return }
     var emojisByUnified: [String: EmojiCharacter] = [:]
     var emojisByShortName: [String: EmojiCharacter] = [:]
     var emojisByCharacter: [String: EmojiCharacter] = [:]
-    for emoji in self.emojis {
+    for emoji in Data.emojis {
       emojisByUnified[emoji.unified] = emoji
       emojisByShortName[emoji.shortName] = emoji
       emojisByCharacter[emoji.character] = emoji
@@ -102,20 +31,22 @@ public struct Emoji {
         emojisByShortName[shortName] = emoji
       }
     }
-    self.emojisByUnified = emojisByUnified
-    self.emojisByShortName = emojisByShortName
-    self.emojisByCharacter = emojisByCharacter
+    Computed.emojisByUnified = emojisByUnified
+    Computed.emojisByShortName = emojisByShortName
+    Computed.emojisByCharacter = emojisByCharacter
 
     let shortNames = emojisByShortName.keys.joined(separator: "|")
-    let escapedShortNames = try NSRegularExpression(pattern: "[.*+?^${}()\\[\\]\\\\]")
+    let escapedShortNames = try! NSRegularExpression(pattern: "[.*+?^${}()\\[\\]\\\\]")
       .stringByReplacingMatches(
         in: shortNames,
         range: NSRange(location: 0, length: shortNames.count), withTemplate: "\\$0"
       )
 
-    self.regex = try NSRegularExpression(
+    Computed.regex = try! NSRegularExpression(
       pattern: ":(\(escapedShortNames)):"
     )
+
+    Computed.isComputed = true
   }
 
   /// Find an ``EmojiCharacter`` by unified codepoint ID.
@@ -124,8 +55,9 @@ public struct Emoji {
   ///   - unified: The unified codepoint ID for an emoji.
   ///
   /// - Returns The ``EmojiCharacter`` or `nil` when there is no Emoji for the given codepoint ID
-  public func from(unified: String) -> EmojiCharacter? {
-    self.emojisByUnified[unified]
+  public static func from(unified: String) -> EmojiCharacter? {
+    self.prepareIfNecessary()
+    return Computed.emojisByUnified[unified]
   }
 
   /// Find an ``EmojiCharacter`` by any of it's known short names
@@ -134,24 +66,81 @@ public struct Emoji {
   ///   - shortName: The shortname to look for
   ///
   /// Returns The ``EmojiCharacter`` or `nil` when there is no Emoji for the given short name
-  public func from(shortName: String) -> EmojiCharacter? {
-    self.emojisByShortName[shortName]
+  public static func from(shortName: String) -> EmojiCharacter? {
+    self.prepareIfNecessary()
+    return Computed.emojisByShortName[shortName]
   }
 
-  public func from(character: String) -> EmojiCharacter? {
-    self.emojisByCharacter[character]
+  /// Find an ``EmojiCharacter`` by the unicode character itself
+  ///
+  /// - Parameters:
+  ///   - character: A unicode character string like: 😀
+  ///
+  /// Returns The ``EmojiCharacter`` or `nil` when there is no Emoji for the given character
+  public static func from(character: String) -> EmojiCharacter? {
+    self.prepareIfNecessary()
+    return Computed.emojisByCharacter[character]
   }
 
-  public func replaceShortNamesByEmojiCharacters(in string: String) -> String {
+  /// Replace emoji short names in a string with their emoji character counterparts
+  ///
+  /// For example: `":grin:"` will become `"😁"`
+  ///
+  /// - Parameters:
+  ///   - string: A string to replace short codes in
+  ///
+///   Returns A new string with all the known emoji short names with their emoji equivalent
+  public static func replaceShortNamesByEmojiCharacters(in string: String) -> String {
+    self.prepareIfNecessary()
     let nsString = NSMutableString(string: string)
 
-    let matches = regex.matches(in: string, range: NSRange(location: 0, length: string.count))
+    let matches = Computed.regex.matches(in: string, range: NSRange(location: 0, length: string.count))
     for match in matches.reversed() {
       let emojiShortName = nsString.substring(with: match.range(at: 1))
 
-      nsString.replaceCharacters(in: match.range, with: emojisByShortName[emojiShortName]?.character ?? "")
+      nsString.replaceCharacters(in: match.range, with: Computed.emojisByShortName[emojiShortName]?.character ?? "")
     }
 
     return nsString as String
+  }
+
+  /// Find the emoji character for a Slack-like short code
+  ///
+  /// - Parameters:
+  ///   - shortCode The shortcode to find the character for. Also supports skin tone short codes like `":grin::skin-tone-2:"`
+  ///
+  /// Returns An emoji character for the given short code or nil
+  public static func character(fromShortCode shortCode: String) -> String? {
+    // Simultaneously takes care of removing `:` from the string and splits skin tone from :pray::skin-tone-6:
+    let emojiElements = shortCode.split(separator: ":").map(String.init)
+
+    guard let emojiAlias = emojiElements.first else {
+      return nil
+    }
+    guard let emoji = from(shortName: emojiAlias) else {
+      return nil
+    }
+
+    if emojiElements.count < 2 {
+      return emoji.character
+    } else {
+      let skinToneShortCode = emojiElements[1]
+
+      let skinToneUnified: String?
+      switch skinToneShortCode {
+      case "skin-tone-2": skinToneUnified = "1F3FB"
+      case "skin-tone-3": skinToneUnified = "1F3FC"
+      case "skin-tone-4": skinToneUnified = "1F3FD"
+      case "skin-tone-5": skinToneUnified = "1F3FE"
+      case "skin-tone-6": skinToneUnified = "1F3FF"
+      default: skinToneUnified = nil
+      }
+
+      guard let skinToneUnified, let skinVariation = emoji.skinVariations?[skinToneUnified] else {
+        return emoji.character
+      }
+
+      return skinVariation.character
+    }
   }
 }

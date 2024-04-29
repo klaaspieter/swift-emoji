@@ -20,9 +20,10 @@ let package = Package(
   targets: [
     .target(
       name: "Emoji",
-      resources: [
-        .process("Resources/")
-      ]
+      dependencies: [.targetItem(name: "Data", condition: nil)]
+    ),
+    .target(
+      name: "Data"
     ),
     .testTarget(
       name: "EmojiTests",

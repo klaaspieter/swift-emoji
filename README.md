@@ -29,13 +29,7 @@ Package(
 
 ## Usage
 
-First load the necessary Emoji data from disk:
-
-```swift
-let emoji = try await Emoji()
-```
-
-Use the `Emoji` instance to interact with emojis in different ways:
+Use the `Emoji` namespace to interact with emojis in different ways:
 
 ```swift
 emoji.from(unified: "261D-FE0F") // ☝️

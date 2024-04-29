@@ -1,28 +1,21 @@
 import XCTest
+import Data
 import Emoji
 
 final class emojiTests: XCTestCase {
-  var emoji: Emoji!
-
-  override func setUp() async throws {
-    self.emoji = try await Emoji()
-  }
-
   func testFromUnified() {
-    XCTAssertEqual(emoji.from(unified: "261D-FE0F")?.character, "☝️")
-    XCTAssertEqual(emoji.from(unified: "1F3C3-1F3FB-200D-2640-FE0F")?.shortName, "woman-running")
+    XCTAssertEqual(Emoji.from(unified: "261D-FE0F")?.character, "☝️")
+    XCTAssertEqual(Emoji.from(unified: "1F3C3-1F3FB-200D-2640-FE0F")?.shortName, "woman-running")
   }
 
   func testFromShortName() {
-    XCTAssertEqual(emoji.from(shortName: "santa")?.name, "FATHER CHRISTMAS")
-    XCTAssertEqual(emoji.from(shortName: "running")?.character, "🏃")
-
-    emoji.from(shortName: "moon")
+    XCTAssertEqual(Emoji.from(shortName: "santa")?.name, "FATHER CHRISTMAS")
+    XCTAssertEqual(Emoji.from(shortName: "running")?.character, "🏃")
   }
 
   func testEmojiFromCharacter() {
-    XCTAssertEqual(emoji.from(character: "🥷")?.name, "NINJA")
-    XCTAssertEqual(emoji.from(character: "🥷🏿")?.name, "NINJA")
+    XCTAssertEqual(Emoji.from(character: "🥷")?.name, "NINJA")
+    XCTAssertEqual(Emoji.from(character: "🥷🏿")?.name, "NINJA")
   }
 
   func testCharacter() {
@@ -36,9 +29,19 @@ final class emojiTests: XCTestCase {
     XCTAssertEqual(emojiCharacter.character, "🏃‍♀️")
   }
 
+  func testCharacterFromShortCode() {
+    XCTAssertEqual(Emoji.character(fromShortCode: ":grin:"), "😁")
+    XCTAssertEqual(Emoji.character(fromShortCode: ":pray::skin-tone-1:"), "🙏")
+    XCTAssertEqual(Emoji.character(fromShortCode: ":pray::skin-tone-2:"), "🙏🏻")
+    XCTAssertEqual(Emoji.character(fromShortCode: ":pray::skin-tone-3:"), "🙏🏼")
+    XCTAssertEqual(Emoji.character(fromShortCode: ":pray::skin-tone-4:"), "🙏🏽")
+    XCTAssertEqual(Emoji.character(fromShortCode: ":pray::skin-tone-5:"), "🙏🏾")
+    XCTAssertEqual(Emoji.character(fromShortCode: ":pray::skin-tone-6:"), "🙏🏿")
+  }
+
   func testStringReplacing() {
     XCTAssertEqual(
-      emoji.replaceShortNamesByEmojiCharacters(in: ":wave: welcome :sweat_smile:. I've got my :eyes: on you."),
+      Emoji.replaceShortNamesByEmojiCharacters(in: ":wave: welcome :sweat_smile:. I've got my :eyes: on you."),
       "👋 welcome 😅. I've got my 👀 on you."
     )
   }
