@@ -16,18 +16,11 @@ let package = Package(
       name: "EmojiData",
       targets: ["EmojiData"]
     ),
-    .library(
-      name: "EmojiDataSource",
-      targets: ["EmojiDataSource"]
-    ),
   ],
   targets: [
     .target(
       name: "EmojiData",
-      dependencies: [.targetItem(name: "EmojiDataSource", condition: nil)]
-    ),
-    .target(
-      name: "EmojiDataSource"
+      resources: [.process("./Resources/emoji.json")]
     ),
     .testTarget(
       name: "EmojiTests",

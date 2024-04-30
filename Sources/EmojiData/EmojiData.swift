@@ -1,4 +1,3 @@
-import EmojiDataSource
 import Foundation
 
 private enum Computed {
@@ -9,15 +8,24 @@ private enum Computed {
   static var regex: NSRegularExpression = .init()
 }
 
-public typealias Emoji = EmojiDataSource.Emoji
-
 public enum EmojiData {
   private static func prepareIfNecessary() {
+    let emojis: [Emoji] = {
+      let decoder = JSONDecoder()
+      decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+      let url = Bundle.module.url(forResource: "emoji", withExtension: "json")!
+      let data = try! Data(contentsOf: url)
+
+      return try! decoder.decode([Emoji].self, from: data)
+    }()
+
     guard !Computed.isComputed else { return }
     var emojisByUnified: [String: Emoji] = [:]
     var emojisByShortName: [String: Emoji] = [:]
     var emojisByCharacter: [String: Emoji] = [:]
-    for emoji in EmojiDataSource.emojis {
+
+    for emoji in emojis {
       emojisByUnified[emoji.unified] = emoji
       emojisByShortName[emoji.shortName] = emoji
       emojisByCharacter[emoji.character] = emoji
