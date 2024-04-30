@@ -96,16 +96,18 @@ let data = try! Data(contentsOf: url)
 let emojis = try! decoder.decode([Emoji].self, from: data)
 
 var output = """
-public let emojis = [
+public let emojis: [Emoji] = {
+  var emojis: [Emoji] = []
 
 """
 
 for emoji in emojis {
-  output += "  \(string(for: emoji)),\n"
+  output += "  emojis.append(\(string(for: emoji)))\n"
 }
 
 output += """
-]
+  return emojis
+}()
 """
 let writeURL = URL(fileURLWithPath: "./../Sources/EmojiDataSource/Data.swift")
 try! output.write(to: writeURL, atomically: true, encoding: .utf8)
