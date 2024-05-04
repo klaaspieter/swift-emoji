@@ -3,7 +3,7 @@ import EmojiData
 
 final class emojiTests: XCTestCase {
   func testAll() {
-    XCTAssertEqual(EmojiData.all.count, 1875)
+    XCTAssertEqual(EmojiData.all.count, 1903)
   }
 
   func testFromUnified() {
