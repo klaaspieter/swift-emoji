@@ -2,6 +2,7 @@ import Foundation
 
 private enum Computed {
   static var isComputed: Bool = false
+  static var allEmojis: [Emoji] = []
   static var emojisByUnified: [String: Emoji] = [:]
   static var emojisByShortName: [String: Emoji] = [:]
   static var emojisByCharacter: [String: Emoji] = [:]
@@ -10,6 +11,8 @@ private enum Computed {
 
 public enum EmojiData {
   private static func prepareIfNecessary() {
+    guard !Computed.isComputed else { return }
+
     let emojis: [Emoji] = {
       let decoder = JSONDecoder()
       decoder.keyDecodingStrategy = .convertFromSnakeCase
@@ -20,7 +23,6 @@ public enum EmojiData {
       return try! decoder.decode([Emoji].self, from: data)
     }()
 
-    guard !Computed.isComputed else { return }
     var emojisByUnified: [String: Emoji] = [:]
     var emojisByShortName: [String: Emoji] = [:]
     var emojisByCharacter: [String: Emoji] = [:]
@@ -41,6 +43,7 @@ public enum EmojiData {
         emojisByShortName[shortName] = emoji
       }
     }
+    Computed.allEmojis = emojis
     Computed.emojisByUnified = emojisByUnified
     Computed.emojisByShortName = emojisByShortName
     Computed.emojisByCharacter = emojisByCharacter
@@ -58,6 +61,12 @@ public enum EmojiData {
 
     Computed.isComputed = true
   }
+
+  /// Returns all `Emoji`s
+  public static var all: [Emoji] = {
+    prepareIfNecessary()
+    return Computed.allEmojis
+  }()
 
   /// Find an ``Emoji`` by unified codepoint ID.
   ///

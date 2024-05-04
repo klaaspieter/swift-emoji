@@ -2,6 +2,10 @@ import XCTest
 import EmojiData
 
 final class emojiTests: XCTestCase {
+  func testAll() {
+    XCTAssertEqual(EmojiData.all.count, 1875)
+  }
+
   func testFromUnified() {
     XCTAssertEqual(EmojiData.emoji(fromUnified: "261D-FE0F")?.character, "☝️")
     XCTAssertEqual(EmojiData.emoji(fromUnified: "1F3C3-1F3FB-200D-2640-FE0F")?.shortName, "woman-running")
