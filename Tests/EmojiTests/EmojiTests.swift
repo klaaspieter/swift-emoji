@@ -19,6 +19,11 @@ final class emojiTests: XCTestCase {
   func testEmojiFromCharacter() {
     XCTAssertEqual(EmojiData.emoji(fromCharacter: "🥷")?.name, "NINJA")
     XCTAssertEqual(EmojiData.emoji(fromCharacter: "🥷🏿")?.name, "NINJA")
+    XCTAssertEqual(EmojiData.emoji(fromCharacter: "🙏🏿")?.character, "🙏🏿")
+    XCTAssertEqual(
+      EmojiData.emoji(fromCharacter: "🙏🏿")?.skinVariations?.values.map { $0.character }.sorted(),
+      ["🙏🏼", "🙏🏾", "🙏🏽", "🙏🏻"].sorted()
+    )
   }
 
   func emoji() {

@@ -35,7 +35,13 @@ public enum EmojiData {
       if let variations = emoji.skinVariations {
         for (_, variation) in variations {
           emojisByUnified[variation.unified] = emoji
-          emojisByCharacter[variation.character] = emoji
+          emojisByCharacter[variation.character] = Emoji(
+            name: emoji.name, 
+            unified: variation.unified,
+            shortName: emoji.shortName,
+            shortNames: emoji.shortNames,
+            skinVariations: variations.filter { $0.value != variation }
+          )
         }
       }
 
