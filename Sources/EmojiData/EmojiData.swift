@@ -5,7 +5,6 @@ private enum Computed {
   static var allEmojis: [Emoji] = []
   static var emojisByUnified: [String: Emoji] = [:]
   static var emojisByShortName: [String: Emoji] = [:]
-  static var emojisByCharacter: [String: Emoji] = [:]
   static var regex: NSRegularExpression = .init()
 }
 
@@ -25,23 +24,21 @@ public enum EmojiData {
 
     var emojisByUnified: [String: Emoji] = [:]
     var emojisByShortName: [String: Emoji] = [:]
-    var emojisByCharacter: [String: Emoji] = [:]
 
     for emoji in emojis {
-      emojisByUnified[emoji.unified] = emoji
+      emojisByUnified[emoji.unified.uppercased()] = emoji
       emojisByShortName[emoji.shortName] = emoji
-      emojisByCharacter[emoji.character] = emoji
 
       if let variations = emoji.skinVariations {
         for (_, variation) in variations {
-          emojisByUnified[variation.unified] = emoji
-          emojisByCharacter[variation.character] = Emoji(
-            name: emoji.name, 
+          let emojiVariation = Emoji(
+            name: emoji.name,
             unified: variation.unified,
             shortName: emoji.shortName,
             shortNames: emoji.shortNames,
             skinVariations: variations.filter { $0.value != variation }
           )
+          emojisByUnified[variation.unified] = emojiVariation
         }
       }
 
@@ -52,7 +49,6 @@ public enum EmojiData {
     Computed.allEmojis = emojis
     Computed.emojisByUnified = emojisByUnified
     Computed.emojisByShortName = emojisByShortName
-    Computed.emojisByCharacter = emojisByCharacter
 
     let shortNames = emojisByShortName.keys.joined(separator: "|")
     let escapedShortNames = try! NSRegularExpression(pattern: "[.*+?^${}()\\[\\]\\\\]")
@@ -104,7 +100,22 @@ public enum EmojiData {
   /// Returns The ``Emoji`` or `nil` when there is no Emoji for the given character
   public static func emoji(fromCharacter character: String) -> Emoji? {
     self.prepareIfNecessary()
-    return Computed.emojisByCharacter[character]
+
+    let scalars = character.unicodeScalars
+      .map { UnicodeScalar($0) }
+
+    var scalarsWithoutEmojiVariationSelector: [UnicodeScalar] = scalars
+
+    // Strip Variation Selector 16 because it just tells the preceding character to render as emoji.
+    // In other words U+2615 (☕️) is the same as U+2615-U+FE0F but our lookup table doesn't include the variation selector.
+    // See https://symbl.cc/en/FE0F/
+    if scalars.last == "\u{FE0F}".unicodeScalars.first {
+      scalarsWithoutEmojiVariationSelector.removeLast()
+    }
+
+    let unified = scalars.map { String($0.value, radix: 16, uppercase: true) }.joined(separator: "-")
+    let unifiedWithoutVariationSelector = scalarsWithoutEmojiVariationSelector.map { String($0.value, radix: 16, uppercase: true) }.joined(separator: "-")
+    return Computed.emojisByUnified[unified] ?? Computed.emojisByUnified[unifiedWithoutVariationSelector]
   }
 
   /// Replace emoji short names in a string with their emoji character counterparts

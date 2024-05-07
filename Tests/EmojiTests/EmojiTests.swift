@@ -17,6 +17,15 @@ final class emojiTests: XCTestCase {
   }
 
   func testEmojiFromCharacter() {
+    // Ensure that we properly handle the Strip Variation Selector 16 (U+FE0F); which tells a preceding character to render as emoji.
+    // For example ☕️ is comprised of U+2615-U+FE0F, but is just `2615` in our lookup table because
+    // the variation selector doesn't do anything sicne there is no text representation for the emoji.
+    // However it is required for ☃️ because it has a text representation (☃).
+    XCTAssertEqual(EmojiData.emoji(fromCharacter: "\u{2615}")?.name, "HOT BEVERAGE")
+    XCTAssertEqual(EmojiData.emoji(fromCharacter: "\u{2615}\u{FE0F}")?.name, "HOT BEVERAGE")
+    XCTAssertEqual(EmojiData.emoji(fromCharacter: "☃️")?.name, "SNOWMAN")
+
+    // Ensure we handle skin tone variations
     XCTAssertEqual(EmojiData.emoji(fromCharacter: "🥷")?.name, "NINJA")
     XCTAssertEqual(EmojiData.emoji(fromCharacter: "🥷🏿")?.name, "NINJA")
     XCTAssertEqual(EmojiData.emoji(fromCharacter: "🙏🏿")?.character, "🙏🏿")
