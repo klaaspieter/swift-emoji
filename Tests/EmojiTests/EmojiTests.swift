@@ -35,17 +35,6 @@ final class emojiTests: XCTestCase {
     )
   }
 
-  func emoji() {
-    let emoji = Emoji(
-      name: "WOMAN RUNNING",
-      unified: "1F3C3-200D-2640-FE0F",
-      shortName: "woman-running",
-      shortNames: ["woman-running"],
-      skinVariations: [:]
-    )
-    XCTAssertEqual(emoji.character, "🏃‍♀️")
-  }
-
   func testCharacterFromShortCode() {
     XCTAssertEqual(EmojiData.character(fromShortCode: ":grin:"), "😁")
     XCTAssertEqual(EmojiData.character(fromShortCode: ":pray::skin-tone-1:"), "🙏")
@@ -61,5 +50,9 @@ final class emojiTests: XCTestCase {
       EmojiData.replaceShortNamesByEmojiCharacters(in: ":wave: welcome :sweat_smile:. I've got my :eyes: on you."),
       "👋 welcome 😅. I've got my 👀 on you."
     )
+  }
+
+  func testCategories() {
+    XCTAssertEqual(EmojiData.categories.count, 9)
   }
 }

@@ -5,6 +5,7 @@ private enum Computed {
   static var allEmojis: [Emoji] = []
   static var emojisByUnified: [String: Emoji] = [:]
   static var emojisByShortName: [String: Emoji] = [:]
+  static var categories: [Emoji.Category: [Emoji]] = [:]
   static var regex: NSRegularExpression = .init()
 }
 
@@ -24,10 +25,18 @@ public enum EmojiData {
 
     var emojisByUnified: [String: Emoji] = [:]
     var emojisByShortName: [String: Emoji] = [:]
+    var categories: [Emoji.Category: [Emoji]] = [:]
 
     for emoji in emojis {
       emojisByUnified[emoji.unified.uppercased()] = emoji
       emojisByShortName[emoji.shortName] = emoji
+
+      // The emoji data contains a separate “Component” category used for skin type modifiers
+      if let categoryName = Emoji.Category(rawValue: emoji.category) {
+        var category = categories[categoryName] ?? []
+        category.append(emoji)
+        categories[categoryName] = category
+      }
 
       if let variations = emoji.skinVariations {
         for (_, variation) in variations {
@@ -36,6 +45,8 @@ public enum EmojiData {
             unified: variation.unified,
             shortName: emoji.shortName,
             shortNames: emoji.shortNames,
+            category: emoji.category,
+            sortOrder: emoji.sortOrder,
             skinVariations: variations.filter { $0.value != variation }
           )
           emojisByUnified[variation.unified] = emojiVariation
@@ -46,9 +57,16 @@ public enum EmojiData {
         emojisByShortName[shortName] = emoji
       }
     }
-    Computed.allEmojis = emojis
+    Computed.allEmojis = emojis.sorted()
     Computed.emojisByUnified = emojisByUnified
     Computed.emojisByShortName = emojisByShortName
+
+    for categoryName in categories.keys {
+      var emojis = categories[categoryName]
+      emojis?.sort()
+      categories[categoryName] = emojis
+    }
+    Computed.categories = categories
 
     let shortNames = emojisByShortName.keys.joined(separator: "|")
     let escapedShortNames = try! NSRegularExpression(pattern: "[.*+?^${}()\\[\\]\\\\]")
@@ -179,4 +197,9 @@ public enum EmojiData {
       return skinVariation.character
     }
   }
+
+  public static var categories: [Emoji.Category: [Emoji]] = {
+    prepareIfNecessary()
+    return Computed.categories
+  }()
 }

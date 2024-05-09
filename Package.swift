@@ -6,25 +6,19 @@ import PackageDescription
 let package = Package(
   name: "swift-emoji",
   platforms: [
-    .iOS(.v13),
+    .iOS(.v16),
     .macOS(.v10_13),
     .tvOS(.v13),
-    .watchOS(.v6),
+    .watchOS(.v7),
   ],
   products: [
-    .library(
-      name: "EmojiData",
-      targets: ["EmojiData"]
-    ),
+    .library(name: "EmojiData", targets: ["EmojiData"]),
   ],
   targets: [
     .target(
       name: "EmojiData",
       resources: [.process("./Resources/emoji.json")]
     ),
-    .testTarget(
-      name: "EmojiTests",
-      dependencies: ["EmojiData"]
-    ),
+    .testTarget(name: "EmojiTests", dependencies: ["EmojiData"]),
   ]
 )
