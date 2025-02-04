@@ -11,11 +11,11 @@ Or add it to your `Package.swift`:
 ```swift
 Package(
   // Your package metadata
-  
+
   dependencies: [
     .package(url: "https://github.com/klaaspieter/swift-emoji", from: "0.1.0")
   ],
-  
+
   targets: [
     .target(
       // Other target metadata
@@ -50,6 +50,6 @@ EmojiData.all
 
 ## Update Emojis
 
-Download the latest [`emoji.json`](https://raw.githubusercontent.com/iamcal/emoji-data/master/emoji.json) and [`categories.json`](https://github.com/iamcal/emoji-data/blob/master/categories.json) and place them in [Sources/EmojiData/Resources](./Sources/EmojiData/Resources/) 
+Download the latest [`emoji.json`](https://raw.githubusercontent.com/iamcal/emoji-data/master/emoji.json) and place in [Sources/EmojiData/Resources](./Sources/EmojiData/Resources/).
 
 [emoji-data]: https://github.com/iamcal/emoji-data
